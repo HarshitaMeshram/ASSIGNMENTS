@@ -1,0 +1,228 @@
+Here is DOCKER Hands on Lab 03.
+ 
+==========================================================1. Run four HTTPD Docker containers with distinct, meaningful names, and apply restart policies (NO, On-Failure, Always, and Unless-Stopped) to each of the four containers, respectively. Demonstrate that the restart policies function as expected.
+==================================================================================
+no policy
+Do not automatically restart the container. (the default)
+root@DESKTOP-DA2RDP0:~# docker container run -itd --name httpd_01 --restart no httpd
+f43c8356fc534e5e1ea275047291ae267cba0310d2e48b0388cbf35376670dbd
+root@DESKTOP-DA2RDP0:~#
+
+root@DESKTOP-DA2RDP0:~# docker container ls -a
+CONTAINER ID   IMAGE         COMMAND                  CREATED          STATUS                        PORTS     NAMES
+f43c8356fc53   httpd         "httpd-foreground"       11 seconds ago   Up 10 seconds                 80/tcp    httpd_01
+664fbe4bcbd1   ubuntu        "/bin/bash"              16 minutes ago   Exited (137) 15 minutes ago             no_policy
+root@DESKTOP-DA2RDP0:~#
+
+root@DESKTOP-DA2RDP0:~#  docker container stop httpd_01
+httpd_01
+root@DESKTOP-DA2RDP0:~#
+
+root@DESKTOP-DA2RDP0:~# docker container ls -a
+CONTAINER ID   IMAGE         COMMAND                  CREATED          STATUS                        PORTS     NAMES
+f43c8356fc53   httpd         "httpd-foreground"       36 seconds ago   Exited (0) 4 seconds ago                httpd_01
+664fbe4bcbd1   ubuntu        "/bin/bash"              16 minutes ago   Exited (137) 15 minutes ago             no_policy
+2d8b62ded936   ubuntu        "/bin/bash"              20 hours ago     Exited (0) 20 hours ago                 zen_ritchie
+9661f0049071   cloud_image   "/bin/bash -e /init/…"   21 hours ago     Exited (0) 20 hours ago                 ubuntu_contnr
+root@DESKTOP-DA2RDP0:~#
+
+on-failure policy
+Restart the container if it exits due to an error, which manifests as a non-zero exit code. Optionally, limit the number of times the Docker daemon attempts to restart the container using the max-retries option.
+
+root@DESKTOP-DA2RDP0:~#  docker container run -itd --name httpd_02 --restart on-failure httpd
+dae094ea403c50a382b7a3352228a48a811a7bcf7b431d0401697096a9174b50
+root@DESKTOP-DA2RDP0:~#
+root@DESKTOP-DA2RDP0:~#  docker container ls -a
+CONTAINER ID   IMAGE         COMMAND                  CREATED          STATUS                        PORTS     NAMES
+dae094ea403c   httpd         "httpd-foreground"       18 seconds ago   Up 15 seconds                 80/tcp    httpd_02
+f43c8356fc53   httpd         "httpd-foreground"       5 minutes ago    Exited (0) 4 minutes ago                httpd_01
+664fbe4bcbd1   ubuntu        "/bin/bash"              21 minutes ago   Exited (137) 20 minutes ago             no_policy
+root@DESKTOP-DA2RDP0:~#
+root@DESKTOP-DA2RDP0:~#  docker container top httpd_02
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+root                1500                1479                0                   12:42               pts/0               00:00:00            httpd -DFOREGROUND
+www-data            1520                1500                0                   12:42               pts/0               00:00:00            httpd -DFOREGROUND
+www-data            1521                1500                0                   12:42               pts/0               00:00:00            httpd -DFOREGROUND
+www-data            1522                1500                0                   12:42               pts/0               00:00:00            httpd -DFOREGROUND
+root@DESKTOP-DA2RDP0:~#
+root@DESKTOP-DA2RDP0:~# kill -9 1479
+root@DESKTOP-DA2RDP0:~# docker container ls -a | head -n 3
+CONTAINER ID   IMAGE         COMMAND                  CREATED              STATUS                        PORTS     NAMES
+dae094ea403c   httpd         "httpd-foreground"       About a minute ago   Up 14 seconds                 80/tcp    httpd_02
+f43c8356fc53   httpd         "httpd-foreground"       6 minutes ago        Exited (0) 6 minutes ago                httpd_01
+root@DESKTOP-DA2RDP0:~#
+
+always restart policy
+Always restart the container if it stops. If it is manually stopped it will be ignored. It is restarted only when Docker daemon restarts or the container itself is manually restarted.
+
+root@DESKTOP-DA2RDP0:~# docker container run --name httpd_03 --restart always httpd sleep 10
+root@DESKTOP-DA2RDP0:~# docker container ls -a
+CONTAINER ID   IMAGE         COMMAND                  CREATED          STATUS                        PORTS     NAMES
+42379046ae1d   httpd         "sleep 10"               49 seconds ago   Restarting (0) 1 second ago             httpd_03
+dae094ea403c   httpd         "httpd-foreground"       12 minutes ago   Up 11 minutes                 80/tcp    httpd_02
+f43c8356fc53   httpd         "httpd-foreground"       17 minutes ago   Exited (0) 17 minutes ago               httpd_01
+
+root@DESKTOP-DA2RDP0:~# docker inspect httpd_03
+"RestartPolicy": {
+                "Name": "always",
+                "MaximumRetryCount": 0
+            },
+root@DESKTOP-DA2RDP0:~# docker container stop httpd_03
+httpd_03
+root@DESKTOP-DA2RDP0:~# docker container ls -a
+CONTAINER ID   IMAGE         COMMAND                  CREATED          STATUS                        PORTS     NAMES
+42379046ae1d   httpd         "sleep 10"               2 minutes ago    Exited (0) 8 seconds ago                httpd_03
+dae094ea403c   httpd         "httpd-foreground"       14 minutes ago   Up 13 minutes                 80/tcp    httpd_02
+f43c8356fc53   httpd         "httpd-foreground"       19 minutes ago   Exited (0) 19 minutes ago               httpd_01
+root@DESKTOP-DA2RDP0:~# docker inspect httpd_03
+"RestartPolicy": {
+                "Name": "always",
+                "MaximumRetryCount": 0
+            },
+
+root@DESKTOP-DA2RDP0:~# docker container ls -a
+CONTAINER ID   IMAGE         COMMAND                  CREATED          STATUS                          PORTS     NAMES
+42379046ae1d   httpd         "sleep 10"               4 minutes ago    Exited (0) About a minute ago             httpd_03
+dae094ea403c   httpd         "httpd-foreground"       16 minutes ago   Up 15 minutes                   80/tcp    httpd_02
+f43c8356fc53   httpd         "httpd-foreground"       21 minutes ago   Exited (0) 20 minutes ago                 httpd_01
+
+unless-stopped
+Similar to always, except that when the container is stopped (manually or otherwise), it is not restarted even after Docker daemon restarts.
+
+root@DESKTOP-DA2RDP0:~#  docker container run --name httpd_04 --restart unless-stopped httpd sleep 10
+root@DESKTOP-DA2RDP0:~#
+root@DESKTOP-DA2RDP0:~# docker container ls -a
+CONTAINER ID   IMAGE         COMMAND                  CREATED          STATUS                        PORTS     NAMES
+f37dd8ba3768   httpd         "sleep 10"               17 seconds ago   Up 3 seconds                  80/tcp    httpd_04
+42379046ae1d   httpd         "sleep 10"               15 minutes ago   Exited (0) 12 minutes ago               httpd_03
+dae094ea403c   httpd         "httpd-foreground"       27 minutes ago   Up 25 minutes                 80/tcp    httpd_02
+f43c8356fc53   httpd         "httpd-foreground"       32 minutes ago   Exited (0) 31 minutes ago               httpd_01
+
+root@DESKTOP-DA2RDP0:~# docker inspect httpd_04
+            "RestartPolicy": {
+                "Name": "unless-stopped",
+                "MaximumRetryCount": 0
+            },
+root@DESKTOP-DA2RDP0:~# docker container ls -a
+CONTAINER ID   IMAGE         COMMAND                  CREATED          STATUS                        PORTS     NAMES
+f37dd8ba3768   httpd         "sleep 10"               5 minutes ago    Up 7 seconds                  80/tcp    httpd_04
+42379046ae1d   httpd         "sleep 10"               20 minutes ago   Exited (0) 17 minutes ago               httpd_03
+dae094ea403c   httpd         "httpd-foreground"       31 minutes ago   Up 30 minutes                 80/tcp    httpd_02
+f43c8356fc53   httpd         "httpd-foreground"       37 minutes ago   Exited (0) 36 minutes ago               httpd_01
+
+root@DESKTOP-DA2RDP0:~# docker container stop httpd_04
+httpd_04
+root@DESKTOP-DA2RDP0:~#
+root@DESKTOP-DA2RDP0:~# docker container ls -a
+CONTAINER ID   IMAGE         COMMAND                  CREATED          STATUS                        PORTS     NAMES
+f37dd8ba3768   httpd         "sleep 10"               6 minutes ago    Exited (0) 8 seconds ago                httpd_04
+42379046ae1d   httpd         "sleep 10"               21 minutes ago   Exited (0) 18 minutes ago               httpd_03
+dae094ea403c   httpd         "httpd-foreground"       32 minutes ago   Up 31 minutes                 80/tcp    httpd_02
+f43c8356fc53   httpd         "httpd-foreground"       38 minutes ago   Exited (0) 37 minutes ago               httpd_01
+
+2. Change the restart policy of a above running container from the default to a custom policy using the docker update command. e.g. docker update –help
+
+root@DESKTOP-DA2RDP0:~# docker container ls -a
+CONTAINER ID   IMAGE         COMMAND                  CREATED             STATUS                           PORTS     NAMES
+f37dd8ba3768   httpd         "sleep 10"               17 minutes ago      Exited (0) 11 minutes ago                  httpd_04
+42379046ae1d   httpd         "sleep 10"               32 minutes ago      Exited (0) 29 minutes ago                  httpd_03
+dae094ea403c   httpd         "httpd-foreground"       44 minutes ago      Up 43 minutes                    80/tcp    httpd_02
+f43c8356fc53   httpd         "httpd-foreground"       49 minutes ago      Exited (0) 48 minutes ago                  httpd_01
+
+root@DESKTOP-DA2RDP0:~#
+root@DESKTOP-DA2RDP0:~#  docker container run --name httpd_04 --restart unless-stopped httpd sleep 10
+root@DESKTOP-DA2RDP0:~#
+
+root@DESKTOP-DA2RDP0:~# docker inspect httpd_04   
+"RestartPolicy": {
+                "Name": "unless-stopped",
+                "MaximumRetryCount": 0
+            },
+
+3. Launch an NGINX container with a meaningful name and expose it on the host's port 80. 
+            Create an "index.html" file containing the text "Hello there, Let's be the Team CloudEthiX," and copy the file to the container's "/usr/share/nginx/html/" location. 
+ Access the container in a browser to verify that the webpage displays correctly.
+
+root@DESKTOP-DA2RDP0:~#
+root@DESKTOP-DA2RDP0:~#  docker run --name mynginx1 -p 80:80 -d nginx
+Unable to find image 'nginx:latest' locally
+latest: Pulling from library/nginx
+af107e978371: Already exists
+336ba1f05c3e: Pull complete
+8c37d2ff6efa: Pull complete
+51d6357098de: Pull complete
+782f1ecce57d: Pull complete
+5e99d351b073: Pull complete
+7b73345df136: Pull complete
+Digest: sha256:2bdc49f2f8ae8d8dc50ed00f2ee56d00385c6f8bc8a8b320d0a294d9e3b49026
+Status: Downloaded newer image for nginx:latest
+dbc8a528e00fa99fc9110b9738700b690bd8512c747190d1f5048dc9c2e87edb
+
+root@DESKTOP-DA2RDP0:~# docker ps
+CONTAINER ID   IMAGE     COMMAND                  CREATED              STATUS              PORTS                               NAMES
+dbc8a528e00f   nginx     "/docker-entrypoint.…"   About a minute ago   Up About a minute   0.0.0.0:80->80/tcp, :::80->80/tcp   mynginx1
+dae094ea403c   httpd     "httpd-foreground"       About an hour ago    Up About an hour    80/tcp                              httpd_02
+root@DESKTOP-DA2RDP0:~#
+root@DESKTOP-DA2RDP0:~# cd
+root@DESKTOP-DA2RDP0:~# echo "Hello there, Let's be the Team CloudEthiX," >index.html
+root@DESKTOP-DA2RDP0:~# ll
+total 232
+drwx------ 25 root root  4096 Jan 11 14:07 ./
+drwxr-xr-x 21 root root  4096 Jan 11 11:22 ../
+drwxr-xr-x  2 root root  4096 Dec 28 11:13 .aws/
+drwxr-xr-x  3 root root  4096 Jan  9 13:38 ASSINMENT/
+drwxr-xr-x  3 root root  4096 Jan  3 15:01 Cloud/
+drwxr-xr-x  4 root root  4096 Jan  8 19:18 PUB_PROJECT/
+-rw-r--r--  1 root root     0 Jan 11 11:42 files01
+drwxr-xr-x  3 root root  4096 Jan  8 22:50 horizon/
+-rw-r--r--  1 root root    43 Jan 11 14:07 index.html
+root@DESKTOP-DA2RDP0:~# docker container cp index.html mynginx1:/usr/share/nginx/html
+Successfully copied 2.05kB to mynginx1:/usr/share/nginx/html
+root@DESKTOP-DA2RDP0:~#
+on webpage -------- localhost:80
+ 
+ ==========================================================
+4. Run a docker container with CPU and Memory limit.  docker container run --help 
+ref links :- 
+https://phoenixnap.com/kb/docker-memory-and-cpu-limit
+https://www.baeldung.com/ops/docker-memory-limit  
+==========================================================
+root@DESKTOP-DA2RDP0:~# docker run -dit --memory="512m" nginx
+11de3dc566e0677ba953b80abb391a139f4dbeaaebcae6dba759913408108b94
+root@DESKTOP-DA2RDP0:~#
+
+root@DESKTOP-DA2RDP0:~# docker container ls -a
+CONTAINER ID   IMAGE         COMMAND                  CREATED             STATUS                         PORTS                               NAMES
+11de3dc566e0   nginx         "/docker-entrypoint.…"   16 seconds ago      Up 13 seconds                  80/tcp                              zealous_volhard
+dbc8a528e00f   nginx         "/docker-entrypoint.…"   20 minutes ago      Up 8 minutes                   0.0.0.0:80->80/tcp, :::80->80/tcp   mynginx1
+
+CONTAINER ID   NAME              CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O   PIDS
+11de3dc566e0   zealous_volhard   0.00%     3.113MiB / 512MiB     0.61%     936B / 0B         0B / 0B     3
+dbc8a528e00f   mynginx1          0.00%     2.871MiB / 5.761GiB   0.05%     4.39kB / 2.99kB   0B / 0B     3
+dae094ea403c   httpd_02          0.01%     19.61MiB / 5.761GiB   0.33%     1.44kB / 0B       0B / 0B     82
+CONTAINER ID   NAME              CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O   PIDS
+
+root@DESKTOP-DA2RDP0:~#
+root@DESKTOP-DA2RDP0:~# docker run -dit --cpu-shares="777" nginx
+62eefe16fb99c20fb71b0dfa1666be35ed72ec591fc02c5cdc11121b248b7bd0
+root@DESKTOP-DA2RDP0:~#
+"CpuShares": 777,
+            "Memory": 0,
+            "NanoCpus": 0,
+        
+==========================================================
+    5.  Update CUP and Memory of docker container using docker update.
+    ref links :- https://docs.docker.com/engine/reference/commandline/update/
+==========================================================
+root@DESKTOP-DA2RDP0:~# docker update --cpu-shares 777 62eefe16fb99
+62eefe16fb99
+root@DESKTOP-DA2RDP0:~#
+
+root@DESKTOP-DA2RDP0:~#
+root@DESKTOP-DA2RDP0:~# docker update --cpu-shares 777 -m 0M 62eefe16fb99
+root@DESKTOP-DA2RDP0:~#
+
+-------------------------------------------------------------------------------------------------------------
+
+
+
