@@ -1,0 +1,129 @@
+					DOCKER_04_ASSIGNMENT
+
+1. Pull the Busy-box image to your local system, tag it, and push it to the Docker Hub repository "yourname_cloudethix_busybox.
+
+root@DESKTOP-DA2RDP0:harsh# docker pull busybox:latest
+latest: Pulling from library/busybox
+Digest: sha256:ba76950ac9eaa407512c9d859cea48114eeff8a6f12ebaa5d32ce79d4a017dd8
+Status: Image is up to date for busybox:latest
+docker.io/library/busybox:latest
+
+root@DESKTOP-DA2RDP0:harsh# docker image tag busybox:latest harshitameshram/harsh_cloudethix_busybox:v1
+
+root@DESKTOP-DA2RDP0:harsh# docker image ls
+REPOSITORY                                 TAG       IMAGE ID       CREATED        SIZE
+my_iamge                                   viks      6ce7667bf645   6 days ago     584MB
+harshitameshram/developer                  v1        6ce7667bf645   6 days ago     584MB
+cloud_image                                latest    6ce7667bf645   6 days ago     584MB
+cloudethix.com                             latest    6ce7667bf645   6 days ago     584MB
+develop                                    latest    6ce7667bf645   6 days ago     584MB
+dreams                                     dr        6ce7667bf645   6 days ago     584MB
+harshitameshram/harsh_cloudethix_busybox   v1        9211bbaa0dbd   4 weeks ago    4.26MB
+busybox                                    latest    9211bbaa0dbd   4 weeks ago    4.26MB
+root@DESKTOP-DA2RDP0:harsh#
+
+root@DESKTOP-DA2RDP0:harsh# docker image push harshitameshram/harsh_cloudethix_busybox:v1
+The push refers to repository [docker.io/harshitameshram/harsh_cloudethix_busybox]
+82ae998286b2: Mounted from library/busybox
+v1: digest: sha256:7de5fa822a9d1e507c36565ee0cf50c08faa64505461c844a3ce3944d23efa35 size: 527
+
+------------------------------
+harshitameshram
+/
+harsh_cloudethix_busybox
+Description
+Harsh_cloudethix_busybox
+Last pushed: less than a minute ago
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+2. In your project directory, create a Dockerfile (named Dockerfile) with the following content.
+    FROM nginx:latest
+    COPY custom-index.html /usr/share/nginx/html/index.html
+  Ensure you also have a file named custom-index.html in the same directory.
+  Build the Docker image using the Dockerfile you created and push it your repository. 
+  Delete the local image.
+  Start a new container using the custom Nginx image that you just pushed.
+  Map port 8080 on your host to port 80 in the container. Check the container page in browser.
+
+root@DESKTOP-DA2RDP0:harsh# vim dockerfile
+root@DESKTOP-DA2RDP0:harsh#
+root@DESKTOP-DA2RDP0:harsh# cat dockerfile
+FROM nginx:latest
+COPY custom-index.html /usr/share/nginx/html/index.html
+root@DESKTOP-DA2RDP0:harsh#
+root@DESKTOP-DA2RDP0:harsh# vim custom-index.html
+root@DESKTOP-DA2RDP0:harsh#
+
+
+root@DESKTOP-DA2RDP0:harsh# docker build -t harshitameshram/developer:v1 .
+ERROR: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+root@DESKTOP-DA2RDP0:harsh# service docker start
+ * Starting Docker: docker                                                                                                    [ OK ]
+root@DESKTOP-DA2RDP0:harsh#
+
+root@DESKTOP-DA2RDP0:harsh# docker build -t dockerfile .
+[+] Building 1.1s (7/7) FINISHED                                                                                      docker:default
+ => [internal] load build definition from dockerfile                                                                            0.2s
+ => => transferring dockerfile: 111B                                                                                            0.0s
+ => [internal] load .dockerignore                                                                                               0.2s
+ => => transferring context: 2B                                                                                                 0.0s
+ => [internal] load metadata for docker.io/library/nginx:latest                                                                 0.0s
+ => [internal] load build context                                                                                               0.1s
+ => => transferring context: 38B                                                                                                0.0s
+ => [1/2] FROM docker.io/library/nginx:latest                                                                                   0.0s
+ => CACHED [2/2] COPY custom-index.html /usr/share/nginx/html/index.html                                                        0.0s
+ => exporting to image                                                                                                          0.1s
+ => => exporting layers                                                                                                         0.0s
+ => => writing image sha256:6c44f669082b5c4af2df633c783f03be75a2179108e530a2084ee422cf0e36a0                                    0.0s
+ => => naming to docker.io/library/dockerfile                                                                                   0.1s
+root@DESKTOP-DA2RDP0:harsh#
+
+root@DESKTOP-DA2RDP0:harsh# docker image tag dockerfile harshitameshram/developer:v1
+root@DESKTOP-DA2RDP0:harsh# docker image ls
+REPOSITORY                                 TAG       IMAGE ID       CREATED          SIZE
+harshitameshram/developer                  v1        6c44f669082b   12 minutes ago   187MB
+dockerfile                                 latest    6c44f669082b   12 minutes ago   187MB
+my_iamge                                   viks      6ce7667bf645   7 days ago       584MB
+cloud_image                                latest    6ce7667bf645   7 days ago       584MB
+cloudethix.com                             latest    6ce7667bf645   7 days ago       584MB
+develop                                    latest    6ce7667bf645   7 days ago       584MB
+dreams                                     dr        6ce7667bf645   7 days ago       584MB
+harshitameshram/developer                  <none>    6ce7667bf645   7 days ago       584MB
+busybox                                    latest    9211bbaa0dbd   4 weeks ago      4.26MB
+harshitameshram/harsh_cloudethix_busybox   v1        9211bbaa0dbd   4 weeks ago      4.26MB
+ubuntu                                     latest    174c8c134b2a   5 weeks ago      77.9MB
+nginx                                      latest    d453dd892d93   2 months ago     187MB
+httpd                                      latest    6fd77d7e5eb7   3 months ago     167MB
+root@DESKTOP-DA2RDP0:harsh#
+
+root@DESKTOP-DA2RDP0:harsh# docker image push harshitameshram/developer:v1
+The push refers to repository [docker.io/harshitameshram/developer]
+2d4c6ad260d2: Pushed
+b074db3b55e1: Mounted from library/nginx
+e50c68532c4a: Mounted from library/nginx
+f6ba584ca3ec: Mounted from library/nginx
+01aaa195cdad: Mounted from library/nginx
+2a13e6a7cca6: Mounted from library/nginx
+370869eba6e9: Mounted from library/nginx
+7292cf786aa8: Mounted from library/nginx
+v1: digest: sha256:cfb6f26501295da29aabfe317623781ea754182122cd47fd8d06851566343e8a size: 1985
+
+root@DESKTOP-DA2RDP0:harsh# docker image rm dockerfile
+Untagged: dockerfile:latest
+root@DESKTOP-DA2RDP0:harsh#
+
+root@DESKTOP-DA2RDP0:harsh# docker container run -itd -p 8080:80 --name docker_01 harshitameshram/developer:v1
+2621c54f8caa3de50c10c9ff1b26ff0c1a0a4a5edb02d7deba44d6fb4dcecdf5
+root@DESKTOP-DA2RDP0:harsh#
+
+root@DESKTOP-DA2RDP0:harsh# netstat -tunlp
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 0.0.0.0:8080            0.0.0.0:*               LISTEN      12782/docker-proxy
+tcp        0      0 0.0.0.0:8081            0.0.0.0:*               LISTEN      11139/docker-proxy
+tcp6       0      0 :::8080                 :::*                    LISTEN      12788/docker-proxy
+tcp6       0      0 :::8081                 :::*                    LISTEN      11145/docker-proxy
+
+
+
